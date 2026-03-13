@@ -1,0 +1,876 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>😇 SAINT OR SINNER 😈</title>
+    <style>
+        /* Import Fonts */
+        @import url('https://fonts.googleapis.com/css2?family=Creepster&family=Cinzel:wght@700&family=Roboto+Mono:wght@500;700&family=Dancing+Script:wght@700&display=swap');
+        
+        * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        
+        body {
+            font-family: 'Roboto Mono', monospace;
+            background-color: #1a0a0a;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: white;
+            overflow-y: auto; 
+            transition: background 1.5s ease;
+            user-select: none;
+        }
+
+        .game-container {
+            width: 100%;
+            max-width: 500px;
+            padding: 15px;
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        /* --- THEMES --- */
+        body.devil-theme {
+            background: linear-gradient(135deg, #1a0a0a 0%, #2d0a0a 50%, #1a0505 100%);
+        }
+        body.devil-theme .game-title { color: #ff3333; text-shadow: 0 0 20px #ff0000; }
+        body.devil-theme .speaker-box { background: linear-gradient(145deg, #330000, #220000); border: 2px solid #ff4444; color: #ffcccc; box-shadow: 0 0 20px rgba(255,0,0,0.2); }
+        body.devil-theme .timer-bar { background: linear-gradient(90deg, #ff0000, #ff6600); box-shadow: 0 0 10px #ff4400; }
+        body.devil-theme .question-box { background: linear-gradient(145deg, #2a0a0a, #1a0505); border: 2px solid #ff4444; box-shadow: 0 0 30px rgba(255,0,0,0.1); }
+        body.devil-theme .option-btn { background: linear-gradient(145deg, #3a0a0a, #2a0505); border: 2px solid #ff6666; color: white; }
+        
+        body.angel-theme {
+            background: linear-gradient(135deg, #f0f0f0 0%, #ffffff 50%, #e6c200 100%);
+            color: #222;
+        }
+        body.angel-theme .game-title { color: #d4af37; text-shadow: 0 0 20px #ffd700; }
+        body.angel-theme .speaker-box { background: linear-gradient(145deg, #fffbe6, #fff); border: 2px solid #d4af37; color: #5c4d00; box-shadow: 0 0 20px rgba(255, 215, 0, 0.4); }
+        body.angel-theme .timer-bar { background: linear-gradient(90deg, #d4af37, #ffd700); box-shadow: 0 0 10px #d4af37; }
+        body.angel-theme .question-box { background: linear-gradient(145deg, #ffffff, #f0f0f0); border: 2px solid #d4af37; color: #333; box-shadow: 0 0 30px rgba(212, 175, 55, 0.2); }
+        body.angel-theme .option-btn { background: white; border: 2px solid #d4af37; color: #333; }
+
+        /* --- TYPOGRAPHY --- */
+        .game-title, #screen-error h2, #screen-gameover h2 {
+            font-family: 'Creepster', cursive !important;
+            font-size: 3.5em; margin-bottom: 10px; text-align: center; line-height: 1; letter-spacing: 2px;
+        }
+
+        .main-btn {
+            font-family: 'Dancing Script', cursive !important;
+            font-size: 1.6em; font-weight: 700; letter-spacing: 1px;
+        }
+
+        .question-box { 
+            font-family: 'Roboto Mono', monospace; font-size: 1.2em; font-weight: 700; line-height: 1.3;
+            padding: 20px; min-height: 100px; display: flex; align-items: center; justify-content: center; text-align: center;
+            border-radius: 15px; margin-bottom: 15px;
+        }
+        
+        .option-btn { 
+            font-family: 'Roboto Mono', monospace; font-size: 1em; font-weight: 500;
+            padding: 16px 20px; margin: 8px 0; width: 100%; text-align: left; border-radius: 10px; 
+            cursor: pointer; transition: all 0.2s; position: relative; overflow: hidden;
+        }
+
+        .speaker-box {
+            font-family: 'Roboto Mono', monospace; font-size: 1.1em;
+            border-radius: 20px; padding: 12px 25px; margin-bottom: 15px; 
+            position: relative; font-weight: bold; text-align: center;
+        }
+
+        /* --- ELEMENTS --- */
+        .avatar {
+            font-size: 90px; margin: 10px 0 15px 0; display: inline-block;
+            animation: floatAvatar 3s ease-in-out infinite; cursor: pointer;
+            filter: drop-shadow(0 0 15px rgba(0,0,0,0.5));
+        }
+        @keyframes floatAvatar { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
+
+        .top-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; flex-wrap: nowrap; }
+        
+        .lives-container { 
+            font-size: 1.5em; 
+            letter-spacing: 3px; 
+            white-space: nowrap; 
+            flex-shrink: 0;
+        }
+        .life-lost { opacity: 0.3; filter: grayscale(100%); }
+
+        .timer-bar { height: 10px; width: 100%; transition: width 0.1s linear; margin: 15px 0; border-radius: 6px; }
+
+        .option-btn:active { transform: scale(0.98); }
+        .option-btn.correct { background: linear-gradient(145deg, #004400, #003300) !important; border-color: #00ff00 !important; color: white !important; }
+        .option-btn.wrong { background: linear-gradient(145deg, #440000, #330000) !important; border-color: #ff0000 !important; color: white !important; animation: shake 0.4s; }
+        .option-btn.disabled { opacity: 0.4; pointer-events: none; text-decoration: line-through; }
+
+        @keyframes shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-5px); } 75% { transform: translateX(5px); } }
+
+        .screen { display: none; text-align: center; padding-bottom: 20px; animation: fadeIn 0.3s; width: 100%; }
+        .active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+        #screen-error { padding-top: 50px; }
+        #screen-error .error-icon { font-size: 80px; margin: 30px 0; display:block; text-shadow: 0 0 20px #ffaa00; animation: pulse 1s infinite;}
+        #screen-error p { color: #ccc; font-family: 'Roboto Mono', monospace; font-size: 1.1em; opacity: 0.8; margin-bottom: 40px; }
+        
+        .main-btn {
+            background: linear-gradient(145deg, #cc0000, #990000); border: none; color: white; padding: 15px 30px;
+            cursor: pointer; border-radius: 10px; margin: 10px 0; width: 100%; box-shadow: 0 5px 0 #660000;
+        }
+        .main-btn:active { transform: translateY(3px); box-shadow: 0 2px 0 #660000; }
+        
+        .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); z-index: 100; display: none; justify-content: center; align-items: center; flex-direction: column; padding: 20px; }
+        .modal.open { display: flex; }
+        .modal-box { border-radius: 20px; max-width: 90%; text-align: center; padding: 30px; border: 2px solid; transition: all 0.5s; }
+        
+        .modal-box h2 { font-family: 'Cinzel', serif; margin-bottom: 20px; }
+        #screen-result h2, #screen-fail h2 { font-family: 'Cinzel', serif; }
+
+        body.devil-theme .modal-box { background: #1a0505; border-color: #ff4444; color: white; box-shadow: 0 0 50px rgba(255,0,0,0.2); }
+        body.devil-theme .modal .main-btn { background: linear-gradient(145deg, #cc0000, #990000); color: white; }
+        
+        body.angel-theme .modal-box { background: #ffffff; border-color: #d4af37; color: #333; box-shadow: 0 0 50px rgba(212, 175, 55, 0.4); }
+        body.angel-theme .modal .main-btn { background: linear-gradient(145deg, #ffd700, #d4af37); color: #333; box-shadow: none; }
+        
+        .icon-btn {
+            background: rgba(0,0,0,0.4); width: 45px; height: 45px; border-radius: 50%;
+            display: flex; justify-content: center; align-items: center; cursor: pointer; margin-right: 10px;
+            font-size: 1.2em; border: 1px solid rgba(255,255,255,0.2); transition: 0.2s;
+            font-family: 'Roboto Mono', monospace; flex-shrink: 0;
+        }
+        .icon-btn:hover { background: rgba(255,255,255,0.1); }
+        body.angel-theme .icon-btn { color: #333; border: 1px solid #d4af37; background: rgba(255,255,255,0.6); }
+
+        .particles { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 0; }
+        .particle { position: absolute; width: 4px; height: 4px; background: #ff4444; border-radius: 50%; animation: float 10s infinite; opacity: 0.3; }
+        body.angel-theme .particle { background: #d4af37; }
+        
+        .high-score-label {
+            font-family: 'Roboto Mono', monospace; color: #ffd700; font-size: 0.9em; 
+            margin-bottom: 30px; opacity: 0.9; letter-spacing: 1px;
+        }
+
+        /* --- TUTORIAL OVERLAY STYLES (Arrows Removed) --- */
+        #tutorial-layer {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.9); z-index: 999; 
+            display: none; /* Hidden by default */
+            flex-direction: column; justify-content: center; align-items: center;
+            font-family: 'Dancing Script', cursive;
+        }
+        
+        /* Positioning text groups to corners */
+        .tut-group { position: absolute; color: white; text-align: center; }
+        /* Adjusted Top position since arrows are gone */
+        .tut-left { top: 90px; left: 15px; text-align: left; }
+        .tut-right { top: 90px; right: 15px; text-align: right; }
+        
+        .tut-text { font-size: 1.2em; margin-top: 5px; text-shadow: 0 0 10px black; }
+        .tut-icon { font-family: 'Roboto Mono', monospace; font-size: 1.2em; }
+
+        @media (max-width: 400px) {
+            .game-title { font-size: 2.8em !important; }
+            .avatar { font-size: 70px !important; margin: 5px 0 !important; }
+            .question-box { font-size: 1.1em !important; padding: 15px !important; min-height: 80px !important; }
+            .option-btn { font-size: 0.95em !important; padding: 12px 15px !important; }
+            .lives-container { font-size: 1.2em !important; letter-spacing: 2px !important; }
+            .icon-btn { width: 38px !important; height: 38px !important; font-size: 1em !important; margin-right: 5px !important; }
+            .main-btn { font-size: 1.3em !important; padding: 12px 20px !important; }
+            .speaker-box { font-size: 1em !important; padding: 10px !important; }
+        }
+    </style>
+</head>
+<body class="devil-theme" id="bodyTheme">
+
+    <div class="particles" id="particles"></div>
+
+    <div id="tutorial-layer" onclick="closeTutorial()">
+        <div class="tut-group tut-left">
+            <div class="tut-text">
+                <span class="tut-icon">🎵</span> Music<br>
+                <span class="tut-icon">?</span> Instructions<br>
+                <span class="tut-icon">✉</span> Report Bug
+            </div>
+        </div>
+
+        <div class="tut-group tut-right">
+            <div class="tut-text">
+                <span class="tut-icon">💡</span> Use Hint<br>
+                <span class="tut-icon">❤️</span> Your Life
+            </div>
+        </div>
+
+        <div style="margin-top: 100px; text-align: center;">
+            <h2 style="font-family:'Creepster', cursive; color:#ff3333; font-size:3em;">FIRST TIME?</h2>
+            <p style="font-size:1.2em; margin-bottom:20px;">Tap anywhere to start.</p>
+            <button class="main-btn" style="width: auto;">I GET IT</button>
+        </div>
+    </div>
+
+    <div id="modal-hint" class="modal" onclick="closeModals()">
+        <div class="modal-box">
+            <h2>GAME RULES</h2>
+            <div style="background: rgba(0,0,0,0.1); padding: 15px; border-radius: 10px; margin-bottom: 10px;">
+                <p style="color:#ff4444; font-weight:bold; font-size: 1.2em;">😈 DEVIL ROUNDS</p>
+                <p style="font-size: 0.9em; margin-top: 5px;">"Tell the Truth"</p>
+                <p style="font-size: 1em;">He is Lying. You must <b>LIE</b>.</p>
+            </div>
+            <div style="background: rgba(212,175,55,0.2); padding: 15px; border-radius: 10px;">
+                <p style="color:#e6c200; font-weight:bold; font-size: 1.2em;">😇 ANGEL ROUNDS</p>
+                <p style="font-size: 0.9em; margin-top: 5px;">"Tell the Truth"</p>
+                <p style="font-size: 1em;">She is Honest. You must <b>TELL TRUTH</b>.</p>
+            </div>
+            <br>
+            <button class="main-btn" onclick="closeModals()">Understood</button>
+        </div>
+    </div>
+
+    <div id="modal-report" class="modal" onclick="closeModals()">
+        <div class="modal-box">
+            <h2 style="color: #00aaff;">REPORT ISSUE</h2>
+            <p style="margin: 20px 0;">Found a bug? Send a screenshot to:</p>
+            <p style="font-family: monospace; background: rgba(0,0,0,0.1); padding: 10px; border-radius:5px; font-size:0.9em;">dragon1605370@gmail.com</p>
+            <button class="main-btn" onclick="closeModals()">OK</button>
+        </div>
+    </div>
+
+    <div id="modal-review" class="modal" onclick="closeModals()">
+        <div class="modal-box" id="reviewContent">
+            <h2>LAST ROUND</h2>
+            <p>No data.</p>
+            <button class="main-btn" onclick="closeModals()">Close</button>
+        </div>
+    </div>
+
+    <div class="game-container">
+        
+        <div id="screen-title" class="screen active">
+            <div style="font-size:100px; margin-bottom:10px; filter: drop-shadow(0 0 20px rgba(255,0,0,0.5));">⚖️</div>
+            <h1 class="game-title">SAINT<br>OR<br>SINNER</h1>
+            <p style="margin-bottom: 20px; font-style: italic; opacity: 0.8; font-family: 'Cinzel', serif;">Switch between Sin and Sanctity.</p>
+            <div class="high-score-label">🏆 BEST SCORE: <span id="bestScoreDisplay">0</span></div>
+            
+            <div style="font-size: 0.8em; margin-bottom: 15px; opacity:0.6;">Learned Questions: <span id="learnedCount">0</span></div>
+            <button class="main-btn" onclick="showModeSelection()">Start Game</button>
+        </div>
+
+        <div id="screen-mode" class="screen">
+            <h2 style="margin-bottom: 30px; font-family: 'Cinzel', serif;">CHOOSE YOUR PATH</h2>
+            <button class="main-btn" style="background:linear-gradient(145deg, #0044cc, #002266); box-shadow: 0 5px 0 #001133;" onclick="startGame('online')">
+                Online Mode<br><span style="font-size:0.5em; opacity:0.8; font-family: sans-serif;">Infinite + Learning</span>
+            </button>
+            <button class="main-btn" onclick="startGame('offline')">
+                Offline Mode<br><span style="font-size:0.5em; opacity:0.8; font-family: sans-serif;">Story Logic</span>
+            </button>
+            <button onclick="showScreen('screen-title')" style="background:transparent; border:none; color:#888; margin-top:20px; cursor:pointer; font-size: 1.1em; font-family: 'Dancing Script', cursive;">Back</button>
+        </div>
+
+        <div id="screen-error" class="screen">
+            <h2>NETWORK ERROR</h2>
+            <div class="error-icon">⚠️</div>
+            <p>The internet failed.<br>Playing Offline.</p>
+            <button onclick="startGame('offline')" class="main-btn">Play Offline</button>
+            <button onclick="showScreen('screen-title')" style="background:transparent; border:none; color:#888; margin-top:10px; font-family: 'Dancing Script', cursive; font-size: 1.2em;">Back</button>
+        </div>
+
+        <div id="screen-game" class="screen">
+            <div class="top-bar">
+                <div style="display:flex">
+                    <div class="icon-btn" onclick="toggleMusic()" id="musicBtn">🎵</div> <div class="icon-btn" onclick="showModal('modal-hint')">?</div>
+                    <div class="icon-btn" onclick="showModal('modal-report')">✉</div>
+                </div>
+                <div style="display:flex; align-items:center;">
+                    <div id="hintBtn" class="icon-btn" onclick="useHint()" style="margin-right:15px; width:auto; padding:0 15px; border-radius:20px;">
+                        💡 <span id="hintCount" style="margin-left:5px;">3</span>
+                    </div>
+                    <div class="lives-container" id="livesDisplay">❤️❤️❤️</div>
+                </div>
+            </div>
+
+            <div class="avatar" id="gameAvatar">😈</div>
+
+            <div class="speaker-box" id="speakerBox">...</div>
+            
+            <div class="hud-row" style="font-size:0.8em; opacity:0.8; padding:0 10px; font-family: 'Roboto Mono', monospace;">
+                <span>LVL: <span id="levelNum">1</span></span>
+                <span>PTS: <span id="scoreNum">0</span></span>
+            </div>
+            
+            <div class="timer-bar" id="timerBar"></div>
+            
+            <div class="question-box" id="questionText">Loading...</div>
+            <div id="optionsContainer"></div>
+        </div>
+
+        <div id="screen-result" class="screen">
+            <div class="avatar" id="winAvatar">😈</div>
+            <h2 style="margin: 20px 0; font-family: 'Cinzel', serif;">SURVIVED!</h2>
+            <p id="winMsg" style="margin-bottom: 30px; font-size: 1.2em; font-family: 'Roboto Mono', monospace;">Good choice.</p>
+            <button class="main-btn" style="background: linear-gradient(145deg, #00aa00, #006600); box-shadow: 0 5px 0 #004400;" onclick="nextLevel()">Next Level</button>
+            <br>
+            <button onclick="showReview()" style="background:transparent; border:1px solid currentColor; color:inherit; padding:15px 30px; border-radius:10px; margin-top:10px; cursor:pointer; width:100%; font-family: 'Roboto Mono', monospace;">REVIEW LOGIC</button>
+        </div>
+
+        <div id="screen-fail" class="screen">
+            <div class="avatar">💔</div>
+            <h2 style="color: #ff0000; margin: 20px 0; font-family: 'Cinzel', serif;">HEART LOST</h2>
+            <p id="failMsg" style="margin-bottom: 20px; font-size: 1.2em; color: #ff8888; font-family: 'Roboto Mono', monospace;">You trusted him.</p>
+            <p style="font-size: 1em; margin-bottom: 30px; opacity:0.8;">Lives Remaining: <span id="failLives">0</span></p>
+            <button class="main-btn" onclick="nextLevel()">Continue</button>
+            <br>
+            <button onclick="showReview()" style="background:transparent; border:1px solid currentColor; color:inherit; padding:15px 30px; border-radius:10px; margin-top:10px; cursor:pointer; width:100%; font-family: 'Roboto Mono', monospace;">REVIEW LOGIC</button>
+        </div>
+
+        <div id="screen-gameover" class="screen">
+            <div class="avatar">☠️</div>
+            <h2 style="color: #ff0000; margin: 20px 0;">GAME OVER</h2>
+            <p id="loseMsg" style="margin-bottom: 20px; font-size: 1.2em; font-family: 'Roboto Mono', monospace;">You have fallen.</p>
+            <p style="font-size: 1.5em; margin-bottom: 10px;">Score: <span id="finalScore">0</span></p>
+            <p style="font-size: 1em; margin-bottom: 30px; color:#ffd700;">Best: <span id="bestScoreOver">0</span></p>
+            <button class="main-btn" onclick="restartGame()">Try Again</button>
+            <button onclick="showScreen('screen-title')" style="background:transparent; border:none; color:#888; margin-top:20px; cursor:pointer; font-family: 'Dancing Script', cursive; font-size:1.5em;">Main Menu</button>
+        </div>
+
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            initParticles();
+            try {
+                let saved = localStorage.getItem('devilLearnedDB');
+                if (saved) learnedQuestions = JSON.parse(saved);
+                updateLearnedCount();
+            } catch (e) { learnedQuestions = []; }
+            
+            const best = localStorage.getItem('devilBestScore') || 0;
+            document.getElementById('bestScoreDisplay').textContent = best;
+        });
+
+        // --- STATE ---
+        let state = {
+            mode: 'offline',
+            level: 1,
+            score: 0,
+            lives: 3,
+            hints: 3,
+            timer: null,
+            timeLeft: 100,
+            active: false,
+            paused: false,
+            isAngelRound: false,
+            hintUsedInRound: false,
+            lastQuestion: null,
+            musicOn: false,
+            musicTimer: null 
+        };
+
+        // --- DATA ---
+        const baseQuestions = [
+            { text: "2 + 2 = ?", type: "inverse", options: ["4", "5", "22"], truthIndex: 0 },
+            { 
+                text: "Select the Red Text", 
+                type: "trap", 
+                options: [
+                    {text:"BLUE", color:"#f00", isTruth: true}, 
+                    {text:"RED", color:"#00f", isTruth: true},  
+                    {text:"GREEN", color:"#0f0", isTruth: false}
+                ] 
+            }, 
+            { text: "Click Me!", type: "wait", timerOverride: 50, options: ["Click Me", "Ok", "yes"] },
+            { text: "Is the earth round?", type: "inverse", options: ["Yes", "No", "Maybe"], truthIndex: 0 },
+            { text: "Fire is...", type: "inverse", options: ["Hot", "Cold", "Wet"], truthIndex: 0 }
+        ];
+
+        let learnedQuestions = [];
+        let activeDeck = [];
+        let onlineBuffer = [];
+
+        function updateLearnedCount() { 
+            const el = document.getElementById('learnedCount');
+            if(el) el.textContent = learnedQuestions.length; 
+        }
+
+        function learnNewQuestion(qData) {
+            const exists = learnedQuestions.some(q => q.text === qData.text);
+            if (!exists) {
+                const newQ = { text: qData.text, type: 'inverse', options: qData.options, truthIndex: 0 };
+                learnedQuestions.push(newQ);
+                
+                // Keep local storage from exceeding limits
+                if (learnedQuestions.length > 200) {
+                    learnedQuestions.shift();
+                }
+                
+                localStorage.setItem('devilLearnedDB', JSON.stringify(learnedQuestions));
+                updateLearnedCount();
+            }
+        }
+
+        function initDeck() { activeDeck = [...baseQuestions, ...learnedQuestions]; }
+
+        // --- NEW AMBIENT MUSIC ENGINE (Relaxing) ---
+        let audioCtx = null;
+
+        function initAudio() {
+            if (!audioCtx) { try { audioCtx = new (window.AudioContext || window.webkitAudioContext)(); } catch(e) {} }
+            if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
+        }
+
+        function toggleMusic() {
+            initAudio();
+            state.musicOn = !state.musicOn;
+            const btn = document.getElementById('musicBtn');
+            
+            if(state.musicOn) {
+                btn.style.borderColor = '#00ff00';
+                btn.style.color = '#00ff00';
+                startAmbientMusic();
+            } else {
+                btn.style.borderColor = '';
+                btn.style.color = '';
+                stopAmbientMusic();
+            }
+        }
+
+        function startAmbientMusic() {
+            if(state.musicTimer) clearInterval(state.musicTimer);
+            playAmbientNote();
+            state.musicTimer = setInterval(playAmbientNote, 3000);
+        }
+
+        function stopAmbientMusic() {
+            if(state.musicTimer) clearInterval(state.musicTimer);
+        }
+
+        function playAmbientNote() {
+            if(!audioCtx || !state.musicOn) return;
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+
+            const now = audioCtx.currentTime;
+            
+            if(state.isAngelRound) {
+                osc.type = 'sine';
+                const notes = [523.25, 587.33, 659.25, 783.99, 880.00]; 
+                osc.frequency.value = notes[Math.floor(Math.random() * notes.length)];
+                
+                gain.gain.setValueAtTime(0, now);
+                gain.gain.linearRampToValueAtTime(0.1, now + 0.1); 
+                gain.gain.exponentialRampToValueAtTime(0.001, now + 2); 
+                osc.start(now);
+                osc.stop(now + 2);
+            } else {
+                osc.type = 'triangle';
+                const notes = [130.81, 146.83, 155.56, 174.61, 196.00];
+                osc.frequency.value = notes[Math.floor(Math.random() * notes.length)];
+
+                gain.gain.setValueAtTime(0, now);
+                gain.gain.linearRampToValueAtTime(0.05, now + 0.1);
+                gain.gain.exponentialRampToValueAtTime(0.001, now + 3); 
+                osc.start(now);
+                osc.stop(now + 3);
+            }
+        }
+
+        function playSound(type) {
+            if (!audioCtx) return;
+            try {
+                const o = audioCtx.createOscillator();
+                const g = audioCtx.createGain();
+                o.connect(g); g.connect(audioCtx.destination);
+                if (type === 'correct') {
+                    o.frequency.setValueAtTime(600, audioCtx.currentTime);
+                    g.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.2);
+                } else {
+                    o.frequency.setValueAtTime(100, audioCtx.currentTime);
+                    o.type = 'sawtooth';
+                    g.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
+                }
+                o.start(); o.stop(audioCtx.currentTime + 0.3);
+            } catch (e) { }
+        }
+
+        function showScreen(id) {
+            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+            document.getElementById(id).classList.add('active');
+        }
+        function showModeSelection() { showScreen('screen-mode'); }
+        
+        function showModal(id) { 
+            state.paused = true;
+            document.getElementById(id).classList.add('open'); 
+        }
+        function closeModals() { 
+            state.paused = false;
+            document.querySelectorAll('.modal').forEach(m => m.classList.remove('open')); 
+        }
+
+        function checkTutorial() {
+            if (!localStorage.getItem('tutorialSeen')) {
+                document.getElementById('tutorial-layer').style.display = 'flex';
+                return true; 
+            }
+            return false;
+        }
+
+        function closeTutorial() {
+            localStorage.setItem('tutorialSeen', 'true');
+            document.getElementById('tutorial-layer').style.display = 'none';
+            loadLevel(); 
+        }
+
+        function updateLivesUI() {
+            const container = document.getElementById('livesDisplay');
+            let html = '';
+            for(let i=0; i<3; i++) {
+                if(i < state.lives) html += '❤️';
+                else html += '<span class="life-lost">💔</span>';
+            }
+            container.innerHTML = html;
+        }
+
+        function setTheme(isAngel) {
+            const body = document.getElementById('bodyTheme');
+            const avatar = document.getElementById('gameAvatar');
+            const speaker = document.getElementById('speakerBox');
+            
+            if(isAngel) {
+                body.className = 'angel-theme';
+                avatar.textContent = '😇';
+                speaker.textContent = 'Angel says: Tell the TRUTH.';
+                document.getElementById('winAvatar').textContent = '😇';
+                document.getElementById('winMsg').textContent = 'Truth prevails.';
+            } else {
+                body.className = 'devil-theme';
+                avatar.textContent = '😈';
+                speaker.textContent = 'Devil says: Tell the TRUTH.';
+                document.getElementById('winAvatar').textContent = '😈';
+                document.getElementById('winMsg').textContent = 'Good lie.';
+            }
+        }
+
+        function useHint() {
+            if (state.hints <= 0 || !state.active || state.paused) return;
+            
+            if (state.hintUsedInRound) {
+                document.getElementById('hintBtn').classList.add('shake');
+                setTimeout(() => document.getElementById('hintBtn').classList.remove('shake'), 500);
+                return;
+            }
+
+            if (state.lastQuestion.type === 'wait') {
+                alert("Hint: Don't touch anything!");
+                state.hintUsedInRound = true;
+                return;
+            }
+
+            state.hints--;
+            state.hintUsedInRound = true; 
+            document.getElementById('hintCount').textContent = state.hints;
+            document.getElementById('hintBtn').classList.add('used');
+
+            const buttons = document.querySelectorAll('.option-btn:not(.disabled)');
+            if (buttons.length <= 1) return;
+
+            for (let btn of buttons) {
+                const isTruth = (btn.getAttribute('data-truth') === 'true');
+                
+                if (state.isAngelRound) {
+                    if (!isTruth) { btn.classList.add('disabled'); break; }
+                }
+                else {
+                    if (!isTruth) { btn.classList.add('disabled'); break; }
+                }
+            }
+        }
+
+        function showReview() {
+            const content = document.getElementById('reviewContent');
+            if (!state.lastQuestion) {
+                content.innerHTML = `<h2>LAST ROUND</h2><p>No data.</p><button class="main-btn" onclick="closeModals()">Close</button>`;
+            } else {
+                const q = state.lastQuestion;
+                let html = `<h2>LAST ROUND</h2>`;
+                if (q.wasAngel) {
+                    html += `<p style="color:#d4af37; font-weight:bold;">😇 ANGEL ROUND</p>`;
+                    html += `<p style="font-size:0.9em; opacity:0.8; font-family:'Roboto Mono'">She said: "Tell the Truth."</p>`;
+                    html += `<p>You must <b>OBEY</b> (Tell Truth).</p>`;
+                } else {
+                    html += `<p style="color:#ff4444; font-weight:bold;">😈 DEVIL ROUND</p>`;
+                    html += `<p style="font-size:0.9em; opacity:0.8; font-family:'Roboto Mono'">He said: "Tell the Truth."</p>`;
+                    html += `<p>You must <b>DISOBEY</b> (Lie).</p>`;
+                }
+                html += `<hr style="margin:15px 0; border-color:currentColor; opacity:0.3;">`;
+                html += `<p style="font-size:1.1em; margin-bottom:10px; font-family:'Roboto Mono'">"${q.question}"</p>`;
+                if(q.type === 'wait') {
+                    if (q.wasAngel) html += `<p>Correct Action: <b>Click Button</b> (Obey)</p>`;
+                    else html += `<p>Correct Action: <b>Wait</b> (Disobey)</p>`;
+                } else {
+                    html += `<p>Truth was: <b style="opacity:0.8;">${q.truthText}</b></p>`;
+                }
+                html += `<br><button class="main-btn" onclick="closeModals()">Close</button>`;
+                content.innerHTML = html;
+            }
+            showModal('modal-review');
+        }
+
+        function startGame(mode) {
+            initAudio(); 
+            state.mode = mode;
+            state.level = 1;
+            state.score = 0;
+            state.lives = 3;
+            state.hints = 3;
+            state.paused = false;
+            document.getElementById('hintCount').textContent = state.hints;
+            state.lastQuestion = null;
+            if(mode === 'offline') initDeck();
+            
+            showScreen('screen-game');
+            updateLivesUI();
+
+            if (!checkTutorial()) {
+                loadLevel();
+            }
+        }
+
+        function restartGame() { startGame(state.mode); }
+
+        function decodeHTML(html) {
+            const txt = document.createElement("textarea");
+            txt.innerHTML = html;
+            return txt.value;
+        }
+
+        async function loadLevel() {
+            state.active = true;
+            state.paused = false;
+            state.hintUsedInRound = false; 
+            document.getElementById('hintBtn').classList.remove('used');
+            
+            document.getElementById('levelNum').textContent = state.level;
+            document.getElementById('scoreNum').textContent = state.score;
+            document.getElementById('optionsContainer').innerHTML = '';
+            document.getElementById('questionText').textContent = "Summoning...";
+
+            state.isAngelRound = (state.level % 10 === 0);
+            setTheme(state.isAngelRound);
+
+            let data = null;
+            try {
+                if (state.mode === 'online') {
+                    data = await fetchOnlineQuestion();
+                } else {
+                    data = getOfflineQuestion();
+                }
+            } catch(e) {
+                showScreen('screen-error');
+                return;
+            }
+
+            let calculatedTruth = "Unknown";
+            if (data.type === 'online') calculatedTruth = data.correctAnswer;
+            else if (data.type === 'inverse') {
+                const truthObj = data.options.find(o => o.isTruth === true);
+                if (truthObj) calculatedTruth = truthObj.text;
+            }
+
+            state.lastQuestion = {
+                question: data.question,
+                type: data.type,
+                truthText: calculatedTruth,
+                wasAngel: state.isAngelRound
+            };
+
+            document.getElementById('questionText').innerHTML = data.question;
+
+            data.options.forEach(opt => {
+                const btn = document.createElement('button');
+                btn.className = 'option-btn';
+                let btnText = "", isTruthVal = false;
+                
+                if (typeof opt === 'object' && opt.text) {
+                    btnText = decodeHTML(opt.text);
+                    if(opt.color) btn.style.color = opt.color;
+                    if(opt.isTruth !== undefined) isTruthVal = opt.isTruth;
+                } else { btnText = decodeHTML(opt); }
+                
+                if(data.type === 'online') isTruthVal = (btnText === decodeHTML(data.correctAnswer));
+                
+                btn.textContent = btnText;
+                btn.setAttribute('data-truth', isTruthVal); 
+                btn.onclick = () => handleAnswer(opt, btn, data);
+                document.getElementById('optionsContainer').appendChild(btn);
+            });
+
+            startTimer(data.timerOverride || 100, data.type === 'wait');
+        }
+
+        function getOfflineQuestion() {
+            if (activeDeck.length === 0) initDeck();
+            const randomIndex = Math.floor(Math.random() * activeDeck.length);
+            const q = activeDeck[randomIndex];
+            activeDeck.splice(randomIndex, 1);
+            
+            let displayOptions = [];
+            if (q.type === 'trap' || q.type === 'wait') {
+                displayOptions = [...q.options].sort(() => Math.random() - 0.5);
+            } else {
+                displayOptions = q.options.map((opt, index) => ({
+                    text: opt,
+                    isTruth: index === q.truthIndex
+                })).sort(() => Math.random() - 0.5);
+            }
+            return { question: q.text, options: displayOptions, type: q.type, timerOverride: q.timerOverride };
+        }
+
+        async function fetchOnlineQuestion() {
+            if (onlineBuffer.length === 0) {
+                const cats = [9, 17, 22];
+                const res = await fetch(`https://opentdb.com/api.php?amount=10&difficulty=easy&type=multiple&category=${cats[Math.floor(Math.random()*3)]}`);
+                if (!res.ok) throw new Error("Network error");
+                const json = await res.json();
+                if (!json.results || json.results.length === 0) throw new Error("No data");
+                onlineBuffer = json.results;
+            }
+            
+            const q = onlineBuffer.shift(); 
+            
+            const learnedOpts = [q.correct_answer, ...q.incorrect_answers.slice(0, 2)];
+            learnNewQuestion({ text: q.question, options: learnedOpts });
+
+            let displayOpts = [q.correct_answer, ...q.incorrect_answers.slice(0, 2)];
+            displayOpts.sort(() => Math.random() - 0.5); 
+
+            return {
+                question: q.question,
+                options: displayOpts,
+                correctAnswer: q.correct_answer,
+                type: 'online'
+            };
+        }
+
+        function startTimer(duration, isWaitLevel) {
+            clearInterval(state.timer);
+            state.timeLeft = duration;
+            const bar = document.getElementById('timerBar');
+            
+            const interval = isWaitLevel ? 100 : Math.max(50, 100 - (state.level * 2));
+
+            state.timer = setInterval(() => {
+                if (state.paused) return; 
+                
+                state.timeLeft--;
+                if(bar) bar.style.width = (state.timeLeft / duration) * 100 + '%';
+                
+                if (state.timeLeft <= 0) {
+                    clearInterval(state.timer);
+                    if (isWaitLevel) {
+                        if (state.isAngelRound) handleDeath("You waited? The Angel said Click!");
+                        else winLevel();
+                    } else {
+                        handleDeath("Time's up!");
+                    }
+                }
+            }, interval);
+        }
+
+        function handleAnswer(selectedOpt, btn, levelData) {
+            if (!state.active || state.paused) return;
+
+            if (levelData.type === 'wait') {
+                state.active = false;
+                clearInterval(state.timer);
+                if (state.isAngelRound) winLevel();
+                else handleDeath("You obeyed the Devil!");
+                return;
+            }
+
+            let isTruth = false;
+            if (levelData.type === 'online') {
+                const decodedSelected = decodeHTML(typeof selectedOpt === 'string' ? selectedOpt : selectedOpt.text);
+                const decodedCorrect = decodeHTML(levelData.correctAnswer);
+                isTruth = (decodedSelected === decodedCorrect);
+            }
+            else isTruth = (selectedOpt.isTruth === true);
+
+            let isWin = false;
+            if (state.isAngelRound) isWin = isTruth; 
+            else isWin = !isTruth; 
+
+            if (isWin) {
+                clearInterval(state.timer);
+                state.active = false;
+                btn.classList.add('correct');
+                playSound('correct');
+                setTimeout(winLevel, 500);
+            } else {
+                btn.classList.add('wrong');
+                playSound('wrong');
+                const cont = document.querySelector('.game-container');
+                if(cont) {
+                    cont.classList.add('shake');
+                    setTimeout(() => cont.classList.remove('shake'), 500);
+                }
+                setTimeout(() => handleDeath("Wrong choice!"), 500); 
+            }
+        }
+
+        function handleDeath(reason) {
+            state.lives--;
+            updateLivesUI();
+            
+            clearInterval(state.timer);
+            state.active = false;
+
+            if (state.lives > 0) {
+                document.getElementById('failMsg').textContent = reason;
+                document.getElementById('failLives').textContent = state.lives;
+                showScreen('screen-fail');
+            } else {
+                document.getElementById('loseMsg').textContent = reason;
+                document.getElementById('finalScore').textContent = state.score;
+                document.getElementById('bestScoreOver').textContent = updateHighScore();
+                showScreen('screen-gameover');
+            }
+        }
+
+        function updateHighScore() {
+            const currentBest = parseInt(localStorage.getItem('devilBestScore') || 0);
+            if (state.score > currentBest) {
+                localStorage.setItem('devilBestScore', state.score);
+                document.getElementById('bestScoreDisplay').textContent = state.score;
+                return state.score;
+            }
+            return currentBest;
+        }
+
+        function winLevel() {
+            state.score += 100 + state.timeLeft;
+            showScreen('screen-result');
+        }
+        function nextLevel() {
+            state.level++;
+            showScreen('screen-game');
+            loadLevel();
+        }
+
+        function initParticles() {
+            const pc = document.getElementById('particles');
+            if(!pc) return;
+            for(let i=0; i<20; i++) {
+                let d = document.createElement('div');
+                d.className = 'particle';
+                d.style.left = Math.random()*100+'%';
+                d.style.animationDelay = Math.random()*5+'s';
+                pc.appendChild(d);
+            }
+        }
+    </script>
+</body>
+</html>
